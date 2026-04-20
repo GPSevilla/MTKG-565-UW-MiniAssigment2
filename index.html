@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signal Scout Prototype</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero panel">
+      <div class="hero-copy">
+        <p class="eyebrow">Agentic Job Search Prototype</p>
+        <h1>Signal Scout</h1>
+        <p class="hero-text">
+          Paste a resume, compare it against a local job board or a custom job description, generate a truth-preserving tailored resume draft,
+          and prepare a guarded application packet for review before submission.
+        </p>
+        <div class="hero-actions">
+          <button id="load-sample">Load Sample Resume</button>
+          <button id="run-agent">Run Agent</button>
+          <button class="ghost" id="reset-demo">Reset</button>
+        </div>
+      </div>
+      <div class="hero-metrics">
+        <div class="metric-card">
+          <span>1</span>
+          <p>Parse resume into signals</p>
+        </div>
+        <div class="metric-card">
+          <span>2</span>
+          <p>Rank jobs with transparent scoring</p>
+        </div>
+        <div class="metric-card">
+          <span>3</span>
+          <p>Tailor materials and prep an application</p>
+        </div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel intake-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Intake</p>
+            <h2>Resume + Preferences</h2>
+          </div>
+          <div class="section-copy-stack">
+            <p class="helper-copy">The prototype supports pasted resumes plus `.txt`, `.md`, `.doc`, `.docx`, and `.pdf` uploads.</p>
+            <p id="parser-status" class="helper-copy">Checking local document parser status...</p>
+          </div>
+        </div>
+        <div class="form-grid">
+          <label class="field field-large">
+            <span>Resume Text</span>
+            <textarea id="resume-input" placeholder="Paste your resume here. Keep bullet points if you have them for better tailoring."></textarea>
+          </label>
+          <div class="side-stack">
+            <label class="field">
+              <span>Upload Resume File</span>
+              <input id="resume-file" type="file" accept=".txt,.md,.text,.doc,.docx,.pdf,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+            </label>
+            <label class="field">
+              <span>Target Roles</span>
+              <input id="target-roles" type="text" placeholder="Example: product analyst, solutions engineer">
+            </label>
+            <label class="field">
+              <span>Preferred Location</span>
+              <input id="preferred-location" type="text" placeholder="Example: Seattle or Remote">
+            </label>
+            <label class="field checkbox-field">
+              <input id="remote-only" type="checkbox">
+              <span>Prioritize remote-only matches</span>
+            </label>
+            <div class="llm-box">
+              <label class="field checkbox-field">
+                <input id="use-llm" type="checkbox">
+                <span>Use OpenAI to tailor the selected resume draft</span>
+              </label>
+              <label class="field">
+                <span>OpenAI API Key</span>
+                <input id="api-key-input" type="password" placeholder="sk-..." autocomplete="off">
+              </label>
+              <label class="field">
+                <span>LLM Model</span>
+                <select id="llm-model">
+                  <option value="gpt-5.4-mini">gpt-5.4-mini (Recommended)</option>
+                  <option value="gpt-5.4">gpt-5.4</option>
+                  <option value="gpt-5-mini">gpt-5-mini</option>
+                </select>
+              </label>
+              <p id="llm-status" class="helper-copy">Checking LLM status...</p>
+              <p class="helper-copy">The API key is only used for the current browser session unless you deploy the app with a server-side `OPENAI_API_KEY`.</p>
+            </div>
+            <div class="info-note">
+              <strong>Prototype boundary:</strong> this version simulates the application handoff and requires a human review gate before a submit action. Job search is still local or pasted-JD based, but resume tailoring can now use an LLM.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel custom-job-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Custom Test Case</p>
+            <h2>Add Your Own Job Description</h2>
+          </div>
+          <button class="ghost" id="add-custom-job">Add To Matching Queue</button>
+        </div>
+        <div class="custom-grid">
+          <label class="field">
+            <span>Role Title</span>
+            <input id="custom-title" type="text" placeholder="AI Operations Analyst">
+          </label>
+          <label class="field">
+            <span>Company</span>
+            <input id="custom-company" type="text" placeholder="Example Labs">
+          </label>
+          <label class="field">
+            <span>Location</span>
+            <input id="custom-location" type="text" placeholder="Remote or Seattle, WA">
+          </label>
+          <label class="field field-wide">
+            <span>Job Description</span>
+            <textarea id="custom-description" placeholder="Paste a job description here if you want to test against a real posting."></textarea>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel log-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Trace</p>
+            <h2>Agent Log</h2>
+          </div>
+          <button class="ghost" id="clear-log">Clear Log</button>
+        </div>
+        <div id="agent-log" class="agent-log empty-state">
+          Run the agent to see its planning, ranking, and tailoring decisions.
+        </div>
+      </section>
+
+      <section class="panel matches-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Decision Layer</p>
+            <h2>Matched Jobs</h2>
+          </div>
+          <p id="match-summary" class="helper-copy">No jobs scored yet.</p>
+        </div>
+        <div id="matches" class="cards-grid empty-state">
+          Add a resume and run the agent to populate the job board.
+        </div>
+      </section>
+
+      <section class="panel tailored-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Output</p>
+            <h2>Tailored Resume Draft</h2>
+          </div>
+          <button class="ghost" id="copy-resume">Copy Draft</button>
+        </div>
+        <div id="resume-output" class="document-view empty-state">
+          The best-match job will generate a targeted resume draft here.
+        </div>
+      </section>
+
+      <section class="panel application-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Action Layer</p>
+            <h2>Application Packet</h2>
+          </div>
+          <button class="ghost" id="simulate-submit">Simulate Submit</button>
+        </div>
+        <div id="application-output" class="document-view empty-state">
+          The application prep packet and review gate will appear here after matching a role.
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

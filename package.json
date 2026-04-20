@@ -1,0 +1,16 @@
+{
+  "name": "signal-scout-prototype",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Agentic job application prototype with local parsing and optional OpenAI resume tailoring.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1",
+    "pdfjs-dist": "^5.4.149"
+  }
+}
